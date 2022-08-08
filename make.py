@@ -108,45 +108,53 @@ with open(sys.argv[1], encoding="utf-8") as f:
 
 
 def find_mod_chain(
-    numbers: List[int], end_on_power_of_2: bool = False, coarseness: int = 1
+    numbers: List[int], second_mod_is_power_of_2: bool = False, coarseness: int = 7
 ) -> List[int]:
     n = len(numbers)
     M = max(numbers)
-    for m1 in range(n, M):
-        if end_on_power_of_2 and (m1 & m1 - 1) != 0:
+    for mB in range(n, M):
+        if second_mod_is_power_of_2 and (mB & mB - 1) != 0:
             continue
-        for m2 in range(m1, M, coarseness):
+        for mA in range(mB, M, coarseness):
             d2 = set()
             ok2 = True
             for x in numbers:
-                if (z := x % m2 % m1) in d2:
+                if (z := x % mA % mB) in d2:
                     ok2 = False
                     break
                 d2.add(z)
             if not ok2:
                 continue
-            return [m2, m1]
+            return [mA, mB]
     raise Exception("no mod chain found")
 
 
 alphabet = sorted({prehash(c) for c in text})
 ms = find_mod_chain(alphabet)
 
+uxn_lut = bytearray()
 uxn_font_data = bytearray()
-for c in set(text):
+i = 0
+for c in sorted(set(text)):
     glyph = font[c]
     h = prehash(c)
     for m in ms:
         h %= m
-    h *= 32
-    uxn_font_data = uxn_font_data.ljust(h + 32, b"\0")
-    uxn_font_data[h : h + 32] = glyph.uxn_bytes().ljust(32, b"\0")
+    h *= 2
+    uxn_lut = uxn_lut.ljust(h + 2, b"\0")
+    uxn_lut[h : h + 2] = i.to_bytes(2, byteorder="big")
+    bs = glyph.uxn_bytes()
+    uxn_font_data += bs
+    i += len(bs) // 16
 
 with open("font.tal", "w", encoding="ascii") as font_tal:
     print(f"@font-mod1 {ms[0]:04x}", file=font_tal)
     print(f"@font-mod2 {ms[1]:04x}", file=font_tal)
+    print("@font-lut", file=font_tal)
+    for i in range(0, len(uxn_lut), 32):
+        print("    " + uxn_lut[i : i + 32].hex(" ", 2), file=font_tal)
     print("@font", file=font_tal)
     for i in range(0, len(uxn_font_data), 32):
         print("    " + uxn_font_data[i : i + 32].hex(" ", 2), file=font_tal)
 
-print(f"Wrote {4 + len(uxn_font_data)} bytes of font data to font.tal")
+print(f"Wrote {4 + len(uxn_lut) + len(uxn_font_data)} bytes of font data to font.tal")
