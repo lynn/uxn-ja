@@ -101,15 +101,19 @@ assert all(
     for c, glyph in font.items()
 )
 
-# Anyway, we will mod the prehash value
-# and index a smaller look-up table based on all the text in the ROM.
-with open(sys.argv[1], encoding="utf-8") as f:
-    text = " ".join(token[1:] for token in f.read().split() if token.startswith('"'))
-
 
 def find_mod_chain(
     numbers: List[int], second_mod_is_power_of_2: bool = False, coarseness: int = 7
 ) -> List[int]:
+    """
+    Find integers [A, B] so that `numbers[i] % A % B` are all distinct, and B is
+    as small as possible.
+
+    Arguments:
+        numbers: The domain to hash from.
+        second_mod_is_power_of_2: Limit B to powers of 2.
+        coarseness: Increment to use when trying values for A.
+    """
     n = len(numbers)
     M = max(numbers)
     for mB in range(n, M):
@@ -129,32 +133,38 @@ def find_mod_chain(
     raise Exception("no mod chain found")
 
 
-alphabet = sorted({prehash(c) for c in text})
-ms = find_mod_chain(alphabet)
+if __name__ == "__main__":
+    with open(sys.argv[1], encoding="utf-8") as code_file:
+        tokens = code_file.read().split()
+    text = "".join(t[1:] for t in tokens if t.startswith('"')) + " 　"
+    alphabet = sorted({prehash(c) for c in text})
+    modulos = find_mod_chain(alphabet)
 
-uxn_lut = bytearray()
-uxn_font_data = bytearray()
-i = 0
-for c in sorted(set(text)):
-    glyph = font[c]
-    h = prehash(c)
-    for m in ms:
-        h %= m
-    h *= 2
-    uxn_lut = uxn_lut.ljust(h + 2, b"\0")
-    uxn_lut[h : h + 2] = i.to_bytes(2, byteorder="big")
-    bs = glyph.uxn_bytes()
-    uxn_font_data += bs
-    i += len(bs) // 16
+    uxn_lut = bytearray()
+    uxn_font_data = bytearray()
+    i = 0
+    for c in sorted(set(text)):
+        glyph = font[c]
+        h = prehash(c)
+        for m in modulos:
+            h %= m
+        h *= 2
+        uxn_lut = uxn_lut.ljust(h + 2, b"\0")
+        uxn_lut[h : h + 2] = i.to_bytes(2, byteorder="big")
+        bs = glyph.uxn_bytes()
+        uxn_font_data += bs
+        i += len(bs) // 16
 
-with open("font.tal", "w", encoding="ascii") as font_tal:
-    print(f"@font-mod1 {ms[0]:04x}", file=font_tal)
-    print(f"@font-mod2 {ms[1]:04x}", file=font_tal)
-    print("@font-lut", file=font_tal)
-    for i in range(0, len(uxn_lut), 32):
-        print("    " + uxn_lut[i : i + 32].hex(" ", 2), file=font_tal)
-    print("@font", file=font_tal)
-    for i in range(0, len(uxn_font_data), 32):
-        print("    " + uxn_font_data[i : i + 32].hex(" ", 2), file=font_tal)
+    with open("font.tal", "w", encoding="ascii") as font_tal:
+        print(f"@font-mod1 {modulos[0]:04x}", file=font_tal)
+        print(f"@font-mod2 {modulos[1]:04x}", file=font_tal)
+        print("@font-lut", file=font_tal)
+        for i in range(0, len(uxn_lut), 32):
+            print("    " + uxn_lut[i : i + 32].hex(" ", 2), file=font_tal)
+        print("@font", file=font_tal)
+        for i in range(0, len(uxn_font_data), 32):
+            print("    " + uxn_font_data[i : i + 32].hex(" ", 2), file=font_tal)
 
-print(f"Wrote {4 + len(uxn_lut) + len(uxn_font_data)} bytes of font data to font.tal")
+    print(
+        f"Wrote {4 + len(uxn_lut) + len(uxn_font_data)} bytes of font data to font.tal"
+    )

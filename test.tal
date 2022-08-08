@@ -11,6 +11,7 @@
     ;line2 #0008 #0020 #42 ;draw-text JSR2
     ;line3 #0008 #0038 #41 ;draw-text JSR2
     ;line4 #0008 #0050 #42 ;draw-text JSR2
+    ;line5 #0008 #0068 #41 ;draw-text JSR2
 BRK
 
 @line1
@@ -21,5 +22,7 @@ BRK
     "(7ビット及び8ビットの "情報交換用符号化文字集合) 00
 @line4
     "自由にUTF-8で日本語を書ける "uxnツール 00
+@line5
+    "戦う e3 80 80 "ｱｲﾃﾑ "　 "魔法 "　 "逃げる 00
 
 ~drawtext.tal
