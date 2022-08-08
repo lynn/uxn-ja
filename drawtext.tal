@@ -1,0 +1,47 @@
+~font.tal
+
+@draw-text ( ptr* x* y* spr -- )
+    STH
+    #2a DEO2
+    #28 DEO2
+    ( ptr* )
+    &loop-text
+    LDAk ,&ok JCN POPr POP2 JMP2r &ok
+    #0000 SWP2 ( prehash* ptr* )
+    LDAk #80 LTH ,&single JCN
+    LDAk #e0 LTH ,&double JCN
+    &triple
+    LDAk #00 SWP ROT2 #60 SFT2 ADD2 SWP2 INC2
+    &double
+    LDAk #00 SWP ROT2 #60 SFT2 ADD2 SWP2 INC2
+    &single
+    LDAk #00 SWP ROT2 #60 SFT2 ADD2 SWP2 INC2
+
+    SWP2
+    ( ptr* prehash* )
+    DUP2
+    ;font-mod1 LDA2 DIV2k MUL2 SUB2
+    ;font-mod2 LDA2 DIV2k MUL2 SUB2 #50 SFT2 ;font ADD2
+    ( ptr* prehash* glyph* )
+    #2c DEO2
+    ( ptr* prehash* )
+    DUP2 #1fe0 GTH2 #00 SWP
+    OVR2 #2020 LTH2 #00 SWP AND2
+    SWP2 #0080 LTH2 #00 SWP ORA2
+    ( ptr* is-halfwidth* )
+    NIP ,&halfwidth JCN
+    #16 #26 DEO
+    STHrk #2f DEOk DEO
+    ( ptr* )
+    #28 DEI2 #0010 ADD2 #28 DEO2
+    #2a DEI2 #0010 SUB2 #2a DEO2
+    ;&loop-text JMP2
+    
+    &halfwidth
+    #06 #26 DEO
+    STHrk #2f DEOk DEO
+    ( ptr* )
+    #28 DEI2 #0008 ADD2 #28 DEO2
+    #2a DEI2 #0010 SUB2 #2a DEO2
+    ;&loop-text JMP2
+( end )

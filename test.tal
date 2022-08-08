@@ -1,0 +1,25 @@
+|00 @System     &vector $2 &wst      $1 &rst    $1 &eaddr  $2 &ecode  $1 &pad     $1 &r       $2 &g      $2 &b     $2 &debug  $1 &halt $1
+|20 @Screen     &vector $2 &width    $2 &height $2 &auto   $1 &pad    $1 &x       $2 &y       $2 &addr   $2 &pixel $1 &sprite $1
+
+|0100 ( -> )
+    #4bf0 .System/r DEO2
+    #0bb0 .System/g DEO2
+    #4fb0 .System/b DEO2
+    #01a0 .Screen/width DEO2
+    #0090 .Screen/height DEO2
+    ;line1 #0008 #0008 #41 ;draw-text JSR2
+    ;line2 #0008 #0020 #42 ;draw-text JSR2
+    ;line3 #0008 #0038 #41 ;draw-text JSR2
+    ;line4 #0008 #0050 #42 ;draw-text JSR2
+BRK
+
+@line1
+    "こんにちは、世界！ 20 "Hello 20 "ﾜｰﾙﾄﾞ. 20 "7-bit 20 "and 20 "8-bit 20 00
+@line2
+    "coded 20 "character 20 "sets 20 "for 20 "information 20 "interchange 20 00
+@line3
+    "(7ビット及び8ビットの "情報交換用符号化文字集合) 00
+@line4
+    "自由にUTF-8で日本語を書ける "uxnツール 00
+
+~drawtext.tal
