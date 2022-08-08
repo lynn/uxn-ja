@@ -1,4 +1,4 @@
-# uxn-jp
+# uxn-ja
 
 This is a tool for helping make [uxn](https://wiki.xxiivv.com/site/uxn.html) applications containing Japanese text.
 
