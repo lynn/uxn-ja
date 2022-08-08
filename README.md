@@ -2,6 +2,10 @@
 
 This is a tool for helping make [uxn](https://wiki.xxiivv.com/site/uxn.html) applications containing Japanese text.
 
+![screenshot of an application displaying Japanese text](./screenshot.png)
+
+## Example
+
 The example `test.tal` contains UTF-8 strings with Japanese characters. To build it, first run:
 
 ```
@@ -33,9 +37,12 @@ It writes its output to `font.tal`, which looks like this:
 
 This data is used by the routine in `drawtext.tal`.
 
-Now you can `uxnasm test.tal test.rom`:
+Now you can assemble `test.tal`, which depends on `drawtext.tal` and `font.tal`:
 
-![screenshot of the application](./screenshot-20220808-172236.bmp)
+```
+uxnasm test.tal test.rom
+uxnemu test.rom
+```
 
 ## Why?
 A 16×16 Japanese bitmap font with kanji support is at least 200 kB, which is far over the maximum uxn ROM size of 64 kB.
