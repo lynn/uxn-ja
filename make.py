@@ -19,7 +19,7 @@ class Glyph:
 
     def display(self) -> str:
         return "\n".join(
-            f"( {row:0{self.width}b} )".translate({48: "・", 49: "██"})
+            f"( {row:0{self.width}b} )".translate({48: "  ", 49: "██"})
             for row in self.rows
         )
 
@@ -35,6 +35,8 @@ class Glyph:
 
 
 def read_font(file_name: str) -> Dict[str, Glyph]:
+    """Read a bitmap font from a JIS-compatible .bdf file."""
+    assert file_name.lower().endswith(".bdf")
     font: Dict[str, Glyph] = {}
     character: str = ""
     width: int = 0
@@ -77,29 +79,16 @@ def read_font(file_name: str) -> Dict[str, Glyph]:
 
 
 def prehash(character: str) -> int:
-    """We don't need to really decode UTF-8 in uxn. We do this instead:"""
+    """
+    Turn a UTF-8 sequence into a number representing a character.
+
+    We don't need to *really* decode UTF-8. Instead we sort of hash the UTF-8
+    bytes by interpreting them in "base 64".
+    """
     s = 0
     for b in character.encode("utf-8"):
         s = (s << 6) + b
     return s & 0xFFFF
-
-
-if not sys.argv[2:]:
-    sys.exit("usage: make.py app.tal [bdf fonts]")
-
-font = {}
-for font_name in sys.argv[2:]:
-    font.update(read_font(font_name))
-
-# There are no prehash collisions:
-assert len({prehash(c) for c in font}) == len(font)
-
-
-# We can use two range checks to predict glyph width:
-assert all(
-    (0x1FE0 < prehash(c) < 0x2020 or prehash(c) < 0x80) == (glyph.width == 8)
-    for c, glyph in font.items()
-)
 
 
 def find_mod_chain(
@@ -120,51 +109,68 @@ def find_mod_chain(
         if second_mod_is_power_of_2 and (mB & mB - 1) != 0:
             continue
         for mA in range(mB, M, coarseness):
-            d2 = set()
-            ok2 = True
+            seen = set()
+            ok = True
             for x in numbers:
-                if (z := x % mA % mB) in d2:
-                    ok2 = False
+                if (z := x % mA % mB) in seen:
+                    ok = False
                     break
-                d2.add(z)
-            if not ok2:
+                seen.add(z)
+            if not ok:
                 continue
             return [mA, mB]
     raise Exception("no mod chain found")
 
 
+def hexdump(data: bytes) -> Iterator[str]:
+    for i in range(0, len(data), 32):
+        yield "    " + data[i : i + 32].hex(" ", 2)
+
+
 if __name__ == "__main__":
+    if not sys.argv[2:]:
+        sys.exit("usage: make.py app.tal [bdf fonts]")
+
+    font = {}
+    for font_name in sys.argv[2:]:
+        font.update(read_font(font_name))
+
+    # Verify that there are no prehash collisions:
+    assert len({prehash(c) for c in font}) == len(font)
+
+    # Verify that we can use two range checks to predict glyph width:
+    for c, glyph in font.items():
+        p = prehash(c)
+        assert (0x1FE0 < p < 0x2020 or p < 0x80) == (glyph.width == 8)
+
     with open(sys.argv[1], encoding="utf-8") as code_file:
         tokens = code_file.read().split()
     text = "".join(t[1:] for t in tokens if t.startswith('"')) + " 　"
     alphabet = sorted({prehash(c) for c in text})
     modulos = find_mod_chain(alphabet)
 
-    uxn_lut = bytearray()
-    uxn_font_data = bytearray()
+    lut = bytearray()
+    font_data = bytearray()
     i = 0
     for c in sorted(set(text)):
         glyph = font[c]
         h = prehash(c)
         for m in modulos:
             h %= m
-        h *= 2
-        uxn_lut = uxn_lut.ljust(h + 2, b"\0")
-        uxn_lut[h : h + 2] = i.to_bytes(2, byteorder="big")
-        bs = glyph.uxn_bytes()
-        uxn_font_data += bs
-        i += len(bs) // 16
+        lut = lut.ljust(2 * h + 2, b"\0")
+        lut[2 * h : 2 * h + 2] = i.to_bytes(2, byteorder="big")
+        font_data += glyph.uxn_bytes()
+        i += glyph.width // 8
 
     with open("font.tal", "w", encoding="ascii") as font_tal:
-        print(f"@font-mod1 {modulos[0]:04x}", file=font_tal)
-        print(f"@font-mod2 {modulos[1]:04x}", file=font_tal)
-        print("@font-lut", file=font_tal)
-        for i in range(0, len(uxn_lut), 32):
-            print("    " + uxn_lut[i : i + 32].hex(" ", 2), file=font_tal)
-        print("@font", file=font_tal)
-        for i in range(0, len(uxn_font_data), 32):
-            print("    " + uxn_font_data[i : i + 32].hex(" ", 2), file=font_tal)
+        for line in [
+            f"@font-mod1 {modulos[0]:04x}",
+            f"@font-mod2 {modulos[1]:04x}",
+            "@font-lut",
+            *hexdump(lut),
+            "@font",
+            *hexdump(font_data),
+        ]:
+            print(line, file=font_tal)
 
-    print(
-        f"Wrote {4 + len(uxn_lut) + len(uxn_font_data)} bytes of font data to font.tal"
-    )
+    print(f"Wrote {4 + len(lut) + len(font_data)} bytes of font data to font.tal")

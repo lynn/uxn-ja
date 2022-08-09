@@ -10,7 +10,6 @@
     #0000 SWP2 ( prehash* ptr* )
     LDAk #80 LTH ,&single JCN
     LDAk #e0 LTH ,&double JCN
-    &triple
     LDAk #00 SWP ROT2 #60 SFT2 ADD2 SWP2 INC2
     &double
     LDAk #00 SWP ROT2 #60 SFT2 ADD2 SWP2 INC2
@@ -21,7 +20,8 @@
     ( ptr* prehash* )
     DUP2
     ;font-mod1 LDA2 DIV2k MUL2 SUB2
-    ;font-mod2 LDA2 DIV2k MUL2 SUB2 #10 SFT2 ;font-lut ADD2 LDA2 #40 SFT2 ;font ADD2
+    ;font-mod2 LDA2 DIV2k MUL2 SUB2
+    #10 SFT2 ;font-lut ADD2 LDA2 #40 SFT2 ;font ADD2
     ( ptr* prehash* glyph* )
     #2c DEO2
     ( ptr* prehash* )
