@@ -162,15 +162,15 @@ if __name__ == "__main__":
         font_data += glyph.uxn_bytes()
         i += glyph.width // 8
 
-    with open("font.tal", "w", encoding="ascii") as font_tal:
+    with open("uxnja-font.tal", "w", encoding="ascii") as font_tal:
         for line in [
-            f"@font-mod1 {modulos[0]:04x}",
-            f"@font-mod2 {modulos[1]:04x}",
-            "@font-lut",
+            f"@uxnja-mod1 {modulos[0]:04x}",
+            f"@uxnja-mod2 {modulos[1]:04x}",
+            "@uxnja-lut",
             *hexdump(lut),
-            "@font",
+            "@uxnja-font",
             *hexdump(font_data),
         ]:
             print(line, file=font_tal)
 
-    print(f"Wrote {4 + len(lut) + len(font_data)} bytes of font data to font.tal")
+    print(f"Wrote {4 + len(lut) + len(font_data)} bytes of font data to uxnja-font.tal")

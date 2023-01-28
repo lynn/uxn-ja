@@ -1,6 +1,6 @@
-~font.tal
+~uxnja-font.tal
 
-@draw-text ( ptr* x* y* spr -- )
+@uxnja-draw ( ptr* x* y* spr -- )
     STH
     #2a DEO2
     #28 DEO2
@@ -19,9 +19,9 @@
     SWP2
     ( ptr* prehash* )
     DUP2
-    ;font-mod1 LDA2 DIV2k MUL2 SUB2
-    ;font-mod2 LDA2 DIV2k MUL2 SUB2
-    #10 SFT2 ;font-lut ADD2 LDA2 #40 SFT2 ;font ADD2
+    ;uxnja-mod1 LDA2 DIV2k MUL2 SUB2
+    ;uxnja-mod2 LDA2 DIV2k MUL2 SUB2
+    #10 SFT2 ;uxnja-lut ADD2 LDA2 #40 SFT2 ;uxnja-font ADD2
     ( ptr* prehash* glyph* )
     #2c DEO2
     ( ptr* prehash* )
@@ -36,7 +36,7 @@
     #28 DEI2 #0010 ADD2 #28 DEO2
     #2a DEI2 #0010 SUB2 #2a DEO2
     ;&loop-text JMP2
-    
+
     &halfwidth
     #06 #26 DEO
     STHrk #2f DEOk DEO
