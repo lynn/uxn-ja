@@ -147,6 +147,8 @@ if __name__ == "__main__":
         tokens = code_file.read().split()
     text = "".join(t[1:] for t in tokens if t.startswith('"')) + " 　"
     alphabet = sorted({prehash(c) for c in text})
+
+    print("Searching...")
     modulos = find_mod_chain(alphabet)
 
     lut = bytearray()

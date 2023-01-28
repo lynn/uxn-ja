@@ -33,13 +33,13 @@ The Python script brute-forces a [perfect hash function](https://en.wikipedia.or
 
 It writes font data, a look-up table, M₁ and M₂ to `uxnja-font.tal`, which is imported by `uxnja.tal`.
 
-Now when you call `uxnja-draw`, it loops over UTF-8 units `x` in the given string, and draws the sprite at `font[table[x mod M₁ mod M₂]]` for each of them.
+Now when you call `uxnja-draw`, it loops over UTF-8 units `x` in the given string, and draws the sprite at `font[lut[x mod M₁ mod M₂]]` for each of them.
 
 ## Why?
 
 A 16×16 Japanese bitmap font with kanji support is at least 200 kB, which is far over the maximum uxn ROM size of 64 kB.
 
-By only bundling the characters used in the ROM and accessing them with a hash function, we can get workable Japanese fonts in uxn that are only 4 kB or so.
+By only bundling the characters used in the ROM and accessing them with a hash function, we can get workable Japanese fonts in uxn that are only 4 kB or so. Each kanji used costs 32 bytes.
 
 ## Font credits
 
